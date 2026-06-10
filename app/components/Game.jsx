@@ -58,6 +58,72 @@ const posicionesLayout = {
   ]
 }
 
+function getValoracion(media) {
+  if (media >= 95) return { texto: 'Equipo Legendario', emoji: '👑', color: 'text-purple-400' }
+  if (media >= 90) return { texto: 'Equipo de Élite', emoji: '⭐', color: 'text-yellow-400' }
+  if (media >= 85) return { texto: 'Equipo Top', emoji: '🔥', color: 'text-orange-400' }
+  if (media >= 80) return { texto: 'Equipo Sólido', emoji: '💪', color: 'text-blue-400' }
+  if (media >= 75) return { texto: 'Equipo Competitivo', emoji: '👍', color: 'text-green-400' }
+  return { texto: 'Equipo de Transición', emoji: '😅', color: 'text-gray-400' }
+}
+
+function ResultadoPanel({ once, media, formacion, onReset }) {
+  const [copiado, setCopiado] = useState(false)
+  const valoracion = getValoracion(media)
+  const jugadores = Object.values(once)
+
+  const compartir = () => {
+    const linea = jugadores.map(j => `${j.nombre} (${j.valoracion})`).join(' · ')
+    const texto = `⚽ Champions Draft\n${valoracion.emoji} ${valoracion.texto} — Media: ${media}\n📋 ${formacion}: ${linea}\n\n¿Puedes superarme?`
+    navigator.clipboard.writeText(texto)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Cabecera resultado */}
+      <div className="text-center py-4">
+        <p className="text-5xl mb-2">{valoracion.emoji}</p>
+        <p className={`text-2xl font-bold ${valoracion.color}`}>{valoracion.texto}</p>
+        <p className="text-6xl font-bold mt-2">{media}</p>
+        <p className="text-gray-400 text-sm">Media del equipo · {formacion}</p>
+      </div>
+
+      {/* Lista de jugadores */}
+      <div className="space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 420px)' }}>
+        {jugadores.map((j, i) => (
+          <div key={i} className="flex justify-between items-center bg-gray-700 rounded-lg px-3 py-1.5">
+            <span className="font-medium text-sm">{j.nombre}</span>
+            <div className="flex gap-2 items-center">
+              <span className="text-xs text-gray-400">{j.posicion}</span>
+              <span className="bg-yellow-500 text-gray-900 font-bold text-sm px-2 py-0.5 rounded">
+                {j.valoracion}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Botones */}
+      <div className="space-y-2 pt-2">
+        <button
+          onClick={compartir}
+          className="w-full bg-blue-600 hover:bg-blue-500 font-bold py-3 rounded-xl transition-colors"
+        >
+          {copiado ? '✓ Copiado al portapapeles' : '📤 Compartir resultado'}
+        </button>
+        <button
+          onClick={onReset}
+          className="w-full bg-yellow-500 text-gray-900 font-bold py-3 rounded-xl hover:bg-yellow-400 transition-colors"
+        >
+          Jugar de nuevo
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Game() {
   const [equipo, setEquipo] = useState(() => getEquipoAleatorio())
   const [formacionElegida, setFormacionElegida] = useState(null)
@@ -253,25 +319,18 @@ export default function Game() {
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <p className="text-4xl">🏆</p>
-                <p className="text-2xl font-bold text-yellow-400">¡Once completado!</p>
-                <p className="text-5xl font-bold">{calcularMedia()}</p>
-                <p className="text-gray-400">Media de tu equipo</p>
-                <button
-                  onClick={() => {
-                    setFormacionElegida(null)
-                    setOnce({})
-                    setJugadoresUsados([])
-                    setJugadorSeleccionado(null)
-                    setEquipo(getEquipoAleatorio())
-                  }}
-                  className="bg-yellow-500 text-gray-900 font-bold px-6 py-3 rounded-xl
-                             hover:bg-yellow-400 transition-colors"
-                >
-                  Jugar de nuevo
-                </button>
-              </div>
+              <ResultadoPanel
+                once={once}
+                media={calcularMedia()}
+                formacion={formacionElegida}
+                onReset={() => {
+                  setFormacionElegida(null)
+                  setOnce({})
+                  setJugadoresUsados([])
+                  setJugadorSeleccionado(null)
+                  setEquipo(getEquipoAleatorio())
+                }}
+              />
             )}
           </div>
         </div>
