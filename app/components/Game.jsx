@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { formaciones, getEquipoAleatorio, getJugadoresCompatibles, compatibilidad } from '../lib/equipos'
 import { createClient } from '../lib/supabase-client'
-import { getPartidaDeHoy, getMonedas, actualizarMonedas, calcularMonedas } from '../lib/db'
+import { getPartidaDeHoy, getMonedas, actualizarMonedas, calcularMonedas, guardarCartas } from '../lib/db'
+import { getTipoSobre, generarSobre } from '../lib/sobres'
+import AperturaSobre from './AperturaSobre'
 
 const posicionesLayout = {
   '4-3-3': [
@@ -78,7 +80,7 @@ function getValoracion(media) {
   return { texto: 'Equipo de Transición', emoji: '😅', color: 'text-gray-400' }
 }
 
-function ResultadoPanel({ once, media, formacion, onReset, monedasGanadas }) {
+function ResultadoPanel({ once, media, formacion, onReset, monedasGanadas, tipoSobre, onAbrirSobre }) {
   const [copiado, setCopiado] = useState(false)
   const valoracion = getValoracion(media)
   const jugadores = Object.values(once)
@@ -119,9 +121,34 @@ function ResultadoPanel({ once, media, formacion, onReset, monedasGanadas }) {
       {/* Botones */}
       <div className="space-y-2 pt-2">
         {monedasGanadas && (
-          <div className="bg-gray-700 rounded-xl p-4 text-center">
-            <p className="text-yellow-400 font-bold text-lg">+🪙 {monedasGanadas} monedas</p>
-            <p className="text-gray-400 text-sm">Recompensa por tu puntuación</p>
+          <div className="bg-gray-700 rounded-xl p-4">
+            <p className="text-gray-400 text-xs uppercase tracking-wide mb-3 text-center">Recompensas</p>
+            <div className="flex gap-3">
+              <div className="flex-1 bg-gray-600 rounded-xl p-3 text-center">
+                <p className="text-yellow-400 font-black text-2xl">+{monedasGanadas}</p>
+                <p className="text-gray-400 text-xs mt-1">🪙 Monedas</p>
+              </div>
+              {tipoSobre && (
+                <button
+                  onClick={onAbrirSobre}
+                  className={`flex-1 rounded-xl p-3 text-center transition-all hover:scale-105 active:scale-95
+                    ${tipoSobre === 'elite' ? 'bg-purple-700 hover:bg-purple-600' :
+                      tipoSobre === 'oro' ? 'bg-yellow-600 hover:bg-yellow-500' :
+                      tipoSobre === 'plata' ? 'bg-gray-400 hover:bg-gray-300' :
+                      'bg-amber-700 hover:bg-amber-600'}`}
+                >
+                  <p className="text-white font-black text-lg">
+                    {tipoSobre === 'elite' ? '💎' : '📦'}
+                  </p>
+                  <p className="text-white text-xs font-bold mt-1">
+                    {tipoSobre === 'elite' ? 'Sobre Élite' :
+                     tipoSobre === 'oro' ? 'Sobre Oro' :
+                     tipoSobre === 'plata' ? 'Sobre Plata' : 'Sobre Bronce'}
+                  </p>
+                  <p className="text-white text-xs opacity-70">Abrir</p>
+                </button>
+              )}
+            </div>
           </div>
         )}
         <button
@@ -151,6 +178,9 @@ export default function Game({ stats }) {
   const [partidaDeHoy, setPartidaDeHoy] = useState(null)
   const [monedas, setMonedas] = useState(0)
   const [monedasGanadas, setMonedasGanadas] = useState(null)
+  const [sobreActual, setSobreActual] = useState(null)
+  const [tipoSobreActual, setTipoSobreActual] = useState(null)
+  const [mostrarSobre, setMostrarSobre] = useState(false)
   const [comprobando, setComprobando] = useState(true)
   const supabase = createClient()
 
@@ -192,13 +222,19 @@ export default function Game({ stats }) {
     const nuevasMonedas = await actualizarMonedas(usuario.id, ganadas, supabase)
     setMonedas(nuevasMonedas)
     setMonedasGanadas(ganadas)
+
+    const tipo = getTipoSobre(mediaFinal)
+    const cartas = generarSobre(tipo)
+    await guardarCartas(usuario.id, cartas, supabase)
+    setSobreActual(cartas)
+    setTipoSobreActual(tipo)
   }
 
   const handleReroll = async () => {
     if (monedas < 100) return
     const nuevasMonedas = await actualizarMonedas(usuario.id, -100, supabase)
     setMonedas(nuevasMonedas)
-    setEquipo(getEquipoAleatorio())
+    setEquipo(getEquipoAleatorio(equipo.id))
     setJugadorSeleccionado(null)
   }
 
@@ -519,6 +555,8 @@ export default function Game({ stats }) {
                 media={calcularMedia()}
                 formacion={formacionElegida}
                 monedasGanadas={monedasGanadas}
+                tipoSobre={tipoSobreActual}
+                onAbrirSobre={() => setMostrarSobre(true)}
                 onReset={() => {
                   setFormacionElegida(null)
                   setOnce({})
@@ -526,6 +564,9 @@ export default function Game({ stats }) {
                   setJugadorSeleccionado(null)
                   setEquipo(getEquipoAleatorio())
                   setMonedasGanadas(null)
+                  setTipoSobreActual(null)
+                  setMostrarSobre(false)
+                  setSobreActual(null)
                 }}
               />
             )}
@@ -533,6 +574,13 @@ export default function Game({ stats }) {
         </div>
       )}
       </>
+      )}
+      {mostrarSobre && sobreActual && (
+        <AperturaSobre
+          cartas={sobreActual}
+          tipoSobre={tipoSobreActual}
+          onCerrar={() => setMostrarSobre(false)}
+        />
       )}
     </main>
   )

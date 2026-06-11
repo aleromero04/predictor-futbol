@@ -731,8 +731,11 @@ export const equipos = [
 
 export const posiciones = ['POR', 'DD', 'DC', 'LI', 'MCD', 'MC', 'MD', 'MI', 'ED', 'EI', 'SD']
 
-export function getEquipoAleatorio() {
-  return equipos[Math.floor(Math.random() * equipos.length)]
+export function getEquipoAleatorio(equipoActualId) {
+  const candidatos = equipoActualId
+    ? equipos.filter(e => e.id !== equipoActualId)
+    : equipos
+  return candidatos[Math.floor(Math.random() * candidatos.length)]
 }
 
 export function getJugadoresPorPosicion(equipo, posicion) {

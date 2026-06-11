@@ -97,3 +97,25 @@ export function calcularMonedas(media) {
   if (media >= 78) return 25
   return 10
 }
+
+export async function guardarCartas(userId, cartas, supabaseClient) {
+  const cartasFormateadas = cartas.map(c => ({
+    user_id: userId,
+    jugador_real_id: c.jugador_real_id,
+    nombre: c.nombre,
+    valoracion: c.valoracion,
+    posicion: c.posicion,
+    equipo: c.equipo
+  }))
+
+  const { error } = await supabaseClient
+    .from('cartas')
+    .insert(cartasFormateadas)
+
+  if (error) {
+    console.error('Error guardando cartas:', error)
+    return false
+  }
+
+  return true
+}
