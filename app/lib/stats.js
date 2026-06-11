@@ -13,12 +13,6 @@ export async function getEstadisticasGlobales() {
     .from('perfiles')
     .select('*', { count: 'exact', head: true })
 
-  const { data: top3 } = await supabase
-    .from('partidas')
-    .select('media, formacion, user_id, perfiles(username)')
-    .order('media', { ascending: false })
-    .limit(3)
-
   const { data: mejorPartida } = await supabase
     .from('partidas')
     .select('media')
@@ -26,10 +20,30 @@ export async function getEstadisticasGlobales() {
     .limit(1)
     .single()
 
+  const { data: top3Partidas } = await supabase
+    .from('partidas')
+    .select('media, formacion, user_id')
+    .order('media', { ascending: false })
+    .limit(3)
+
+  const userIds = top3Partidas?.map(p => p.user_id) || []
+  const { data: perfiles } = await supabase
+    .from('perfiles')
+    .select('id, username')
+    .in('id', userIds)
+
+  const perfilesMap = {}
+  perfiles?.forEach(p => { perfilesMap[p.id] = p.username })
+
+  const top3 = top3Partidas?.map(p => ({
+    ...p,
+    username: perfilesMap[p.user_id] || 'Anónimo'
+  })) || []
+
   return {
     partidasHoy: partidasHoy || 0,
     totalJugadores: totalJugadores || 0,
     mejorMarca: mejorPartida?.media || 0,
-    top3: top3 || []
+    top3
   }
 }

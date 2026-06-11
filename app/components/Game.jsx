@@ -300,7 +300,7 @@ export default function Game({ stats }) {
                   >
                     <span className="text-2xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
                     <div className="flex-1">
-                      <p className="font-bold">{p.perfiles?.username || 'Anónimo'}</p>
+                      <p className="font-bold">{p.username || 'Anónimo'}</p>
                       <p className="text-sm opacity-70">{p.formacion}</p>
                     </div>
                     <span className="text-3xl font-black">{p.media}</span>
