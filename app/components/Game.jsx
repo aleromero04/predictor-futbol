@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { formaciones, getEquipoAleatorio, getJugadoresCompatibles, compatibilidad } from '../lib/equipos'
 import { createClient } from '../lib/supabase-client'
-import { getPartidaDeHoy } from '../lib/db'
+import { getPartidaDeHoy, getMonedas, actualizarMonedas, calcularMonedas } from '../lib/db'
 
 const posicionesLayout = {
   '4-3-3': [
@@ -78,7 +78,7 @@ function getValoracion(media) {
   return { texto: 'Equipo de Transición', emoji: '😅', color: 'text-gray-400' }
 }
 
-function ResultadoPanel({ once, media, formacion, onReset }) {
+function ResultadoPanel({ once, media, formacion, onReset, monedasGanadas }) {
   const [copiado, setCopiado] = useState(false)
   const valoracion = getValoracion(media)
   const jugadores = Object.values(once)
@@ -118,6 +118,12 @@ function ResultadoPanel({ once, media, formacion, onReset }) {
 
       {/* Botones */}
       <div className="space-y-2 pt-2">
+        {monedasGanadas && (
+          <div className="bg-gray-700 rounded-xl p-4 text-center">
+            <p className="text-yellow-400 font-bold text-lg">+🪙 {monedasGanadas} monedas</p>
+            <p className="text-gray-400 text-sm">Recompensa por tu puntuación</p>
+          </div>
+        )}
         <button
           onClick={compartir}
           className="w-full bg-blue-600 hover:bg-blue-500 font-bold py-3 rounded-xl transition-colors"
@@ -143,6 +149,8 @@ export default function Game({ stats }) {
   const [jugadoresUsados, setJugadoresUsados] = useState([])
   const [usuario, setUsuario] = useState(null)
   const [partidaDeHoy, setPartidaDeHoy] = useState(null)
+  const [monedas, setMonedas] = useState(0)
+  const [monedasGanadas, setMonedasGanadas] = useState(null)
   const [comprobando, setComprobando] = useState(true)
   const supabase = createClient()
 
@@ -154,6 +162,10 @@ export default function Game({ stats }) {
         if (user) {
             const partida = await getPartidaDeHoy(user.id)
             setPartidaDeHoy(partida)
+            const m = await getMonedas(user.id, supabase)
+            console.log('usuario id:', user.id)
+            console.log('monedas cargadas:', m)
+            setMonedas(m)
         }
         setComprobando(false)
     }
@@ -175,6 +187,19 @@ export default function Game({ stats }) {
       media: mediaFinal,
       jugadores: jugadores
     })
+
+    const ganadas = calcularMonedas(mediaFinal)
+    const nuevasMonedas = await actualizarMonedas(usuario.id, ganadas, supabase)
+    setMonedas(nuevasMonedas)
+    setMonedasGanadas(ganadas)
+  }
+
+  const handleReroll = async () => {
+    if (monedas < 100) return
+    const nuevasMonedas = await actualizarMonedas(usuario.id, -100, supabase)
+    setMonedas(nuevasMonedas)
+    setEquipo(getEquipoAleatorio())
+    setJugadorSeleccionado(null)
   }
 
   const elegirFormacion = (f) => {
@@ -283,6 +308,14 @@ export default function Game({ stats }) {
             </div>
           </div>
 
+          {usuario && (
+            <div className="text-center mb-4">
+              <span className="bg-gray-800 rounded-full px-6 py-2 text-yellow-400 font-bold">
+                🪙 {monedas} monedas
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Selector formacion */}
             <div className="bg-gray-800 rounded-2xl p-8">
@@ -338,6 +371,11 @@ export default function Game({ stats }) {
           <div className="bg-gray-800 rounded-xl p-4">
             <div className="flex justify-between items-center mb-3">
               <h2 className="font-semibold">{formacionElegida}</h2>
+              {usuario && (
+                <span className="text-yellow-400 font-bold text-sm">
+                  🪙 {monedas}
+                </span>
+              )}
               {onceLleno && (
                 <span className={`${getColorValoracion(calcularMedia())} text-white font-bold px-3 py-1 rounded-full`}>
                   Media: {calcularMedia()}
@@ -415,11 +453,27 @@ export default function Game({ stats }) {
           <div className="bg-gray-800 rounded-xl p-4">
             {!onceLleno ? (
               <>
-                <div className="mb-2 flex justify-between items-center">
-                    <div>
-                        <p className="text-lg font-bold text-yellow-400 leading-tight">{equipo.nombre}</p>
-                        <p className="text-gray-400 text-xs">Media {equipo.media} · {equipo.liga}</p>
-                    </div>
+                <div className="mb-4 flex justify-between items-start">
+                  <div>
+                    <p className="text-gray-400 text-xs uppercase tracking-wide">Equipo sorteado</p>
+                    <p className="text-xl font-bold text-yellow-400">{equipo.nombre}</p>
+                    <p className="text-gray-400 text-sm">Media {equipo.media} · {equipo.liga}</p>
+                  </div>
+                  {usuario && (
+                    <button
+                      onClick={handleReroll}
+                      disabled={monedas < 100}
+                      className={`flex flex-col items-center px-3 py-2 rounded-xl text-xs font-bold transition-all
+                        ${monedas >= 100
+                          ? 'bg-gray-700 hover:bg-yellow-500 hover:text-gray-900 cursor-pointer'
+                          : 'bg-gray-700 opacity-40 cursor-not-allowed'
+                        }`}
+                    >
+                      <span className="text-lg">🎲</span>
+                      <span>Reroll</span>
+                      <span className="text-yellow-400">🪙 100</span>
+                    </button>
+                  )}
                 </div>
 
                 {jugadorSeleccionado && (
@@ -464,12 +518,14 @@ export default function Game({ stats }) {
                 once={once}
                 media={calcularMedia()}
                 formacion={formacionElegida}
+                monedasGanadas={monedasGanadas}
                 onReset={() => {
                   setFormacionElegida(null)
                   setOnce({})
                   setJugadoresUsados([])
                   setJugadorSeleccionado(null)
                   setEquipo(getEquipoAleatorio())
+                  setMonedasGanadas(null)
                 }}
               />
             )}

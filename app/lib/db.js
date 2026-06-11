@@ -59,3 +59,41 @@ export async function getPartidaDeHoy(userId) {
 
   return data
 }
+
+export async function getMonedas(userId, supabaseClient) {
+  const { data } = await supabaseClient
+    .from('perfiles')
+    .select('monedas')
+    .eq('id', userId)
+    .single()
+
+  return data?.monedas || 0
+}
+
+export async function actualizarMonedas(userId, cantidad, supabaseClient) {
+  const { data: perfil } = await supabaseClient
+    .from('perfiles')
+    .select('monedas')
+    .eq('id', userId)
+    .single()
+
+  const monedasActuales = perfil?.monedas || 0
+  const nuevasMonedas = Math.max(0, monedasActuales + cantidad)
+
+  await supabaseClient
+    .from('perfiles')
+    .update({ monedas: nuevasMonedas })
+    .eq('id', userId)
+
+  return nuevasMonedas
+}
+
+export function calcularMonedas(media) {
+  if (media >= 95) return 750
+  if (media >= 93) return 400
+  if (media >= 90) return 200
+  if (media >= 86) return 100
+  if (media >= 82) return 50
+  if (media >= 78) return 25
+  return 10
+}
