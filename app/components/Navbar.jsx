@@ -49,9 +49,12 @@ export default function Navbar() {
       <div className="flex items-center gap-4">
         {usuario ? (
           <>
-            <span className="text-gray-300 text-sm">
+            <button
+              onClick={() => router.push('/perfil')}
+              className="text-gray-300 hover:text-yellow-400 text-sm transition-colors font-medium"
+            >
               {usuario.user_metadata?.username || usuario.email}
-            </span>
+            </button>
             <button
               onClick={cerrarSesion}
               className="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors"
