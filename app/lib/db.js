@@ -119,3 +119,13 @@ export async function guardarCartas(userId, cartas, supabaseClient) {
 
   return true
 }
+
+export async function getCartas(userId, supabaseClient) {
+  const { data } = await supabaseClient
+    .from('cartas')
+    .select('*')
+    .eq('user_id', userId)
+    .order('valoracion', { ascending: false })
+
+  return data || []
+}
