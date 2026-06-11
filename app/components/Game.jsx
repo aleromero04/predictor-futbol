@@ -126,7 +126,7 @@ function ResultadoPanel({ once, media, formacion, onReset }) {
   )
 }
 
-export default function Game() {
+export default function Game({ stats }) {
   const [equipo, setEquipo] = useState(() => getEquipoAleatorio())
   const [formacionElegida, setFormacionElegida] = useState(null)
   const [once, setOnce] = useState({})
@@ -239,22 +239,80 @@ export default function Game() {
         </div>
       ) : (
       <>
-      <h1 className="text-3xl font-bold text-center mb-6">⚽ Champions Draft</h1>
-
       {!formacionElegida ? (
-        <div className="max-w-md mx-auto bg-gray-800 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4 text-center">Elige tu formación</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {Object.keys(formaciones).map(f => (
-              <button
-                key={f}
-                onClick={() => elegirFormacion(f)}
-                className="bg-gray-700 hover:bg-yellow-500 hover:text-gray-900 
-                           font-bold py-4 rounded-lg transition-colors text-lg"
-              >
-                {f}
-              </button>
-            ))}
+        <div className="max-w-4xl mx-auto">
+          {/* Hero */}
+          <div className="text-center mb-12">
+            <h1 className="text-6xl font-black mb-4 bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+              Champions Draft
+            </h1>
+            <p className="text-gray-400 text-xl max-w-lg mx-auto">
+              Construye el mejor once de la historia de la Champions League. ¿Puedes superar el récord?
+            </p>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-12">
+            <div className="bg-gray-800 rounded-2xl p-6 text-center">
+              <p className="text-4xl font-black text-yellow-400">{stats?.partidasHoy || 0}</p>
+              <p className="text-gray-400 text-sm mt-1">Partidas hoy</p>
+            </div>
+            <div className="bg-gray-800 rounded-2xl p-6 text-center">
+              <p className="text-4xl font-black text-yellow-400">{stats?.mejorMarca || 0}</p>
+              <p className="text-gray-400 text-sm mt-1">Mejor marca</p>
+            </div>
+            <div className="bg-gray-800 rounded-2xl p-6 text-center">
+              <p className="text-4xl font-black text-yellow-400">{stats?.totalJugadores || 0}</p>
+              <p className="text-gray-400 text-sm mt-1">Jugadores</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Selector formacion */}
+            <div className="bg-gray-800 rounded-2xl p-8">
+              <h2 className="text-2xl font-bold mb-2">Elige tu formación</h2>
+              <p className="text-gray-400 text-sm mb-6">Se sorteará un equipo campeón de Champions para cada posición</p>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.keys(formaciones).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => elegirFormacion(f)}
+                    className="bg-gray-700 hover:bg-yellow-500 hover:text-gray-900
+                               font-black py-5 rounded-xl transition-all text-2xl
+                               hover:scale-105 active:scale-95"
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Top 3 */}
+            <div className="bg-gray-800 rounded-2xl p-8">
+              <h2 className="text-2xl font-bold mb-2">🏆 Top del ranking</h2>
+              <p className="text-gray-400 text-sm mb-6">¿Puedes superar a los mejores?</p>
+              <div className="space-y-3">
+                {stats?.top3?.length > 0 ? stats.top3.map((p, i) => (
+                  <div key={i} className={`flex items-center gap-4 rounded-xl px-5 py-4
+                    ${i === 0 ? 'bg-yellow-500 text-gray-900' :
+                      i === 1 ? 'bg-gray-400 text-gray-900' :
+                      'bg-amber-700 text-white'}`}
+                  >
+                    <span className="text-2xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
+                    <div className="flex-1">
+                      <p className="font-bold">{p.perfiles?.username || 'Anónimo'}</p>
+                      <p className="text-sm opacity-70">{p.formacion}</p>
+                    </div>
+                    <span className="text-3xl font-black">{p.media}</span>
+                  </div>
+                )) : (
+                  <div className="text-center text-gray-400 py-8">
+                    <p className="text-4xl mb-2">🎯</p>
+                    <p>¡Sé el primero en el ranking!</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       ) : (
