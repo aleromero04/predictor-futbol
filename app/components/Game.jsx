@@ -60,6 +60,15 @@ const posicionesLayout = {
   ]
 }
 
+function getColorValoracion(v) {
+  if (v >= 95) return 'bg-purple-500'
+  if (v >= 90) return 'bg-blue-500'
+  if (v >= 85) return 'bg-green-600'
+  if (v >= 80) return 'bg-green-400'
+  if (v >= 75) return 'bg-yellow-500'
+  return 'bg-orange-500'
+}
+
 function getValoracion(media) {
   if (media >= 95) return { texto: 'Equipo Legendario', emoji: '👑', color: 'text-purple-400' }
   if (media >= 90) return { texto: 'Equipo de Élite', emoji: '⭐', color: 'text-yellow-400' }
@@ -99,7 +108,7 @@ function ResultadoPanel({ once, media, formacion, onReset }) {
             <span className="font-medium text-sm">{j.nombre}</span>
             <div className="flex gap-2 items-center">
               <span className="text-xs text-gray-400">{j.posicion}</span>
-              <span className="bg-yellow-500 text-gray-900 font-bold text-sm px-2 py-0.5 rounded">
+              <span className={`${getColorValoracion(j.valoracion)} text-white font-bold text-sm px-2 py-0.5 rounded`}>
                 {j.valoracion}
               </span>
             </div>
@@ -213,6 +222,13 @@ export default function Game({ stats }) {
   const onceLleno = formacionElegida &&
     Object.keys(once).length === posicionesLayout[formacionElegida].length
 
+  const tienePosicionDisponible = (jugador) => {
+    if (!formacionElegida) return true
+    return posicionesLayout[formacionElegida].some((slot, index) =>
+      !once[index] && compatibilidad[slot.pos].includes(jugador.posicion)
+    )
+  }
+
   const calcularMedia = () => {
     const jugadores = Object.values(once)
     return Math.round(jugadores.reduce((acc, j) => acc + j.valoracion, 0) / jugadores.length)
@@ -323,7 +339,7 @@ export default function Game({ stats }) {
             <div className="flex justify-between items-center mb-3">
               <h2 className="font-semibold">{formacionElegida}</h2>
               {onceLleno && (
-                <span className="bg-yellow-500 text-gray-900 font-bold px-3 py-1 rounded-full">
+                <span className={`${getColorValoracion(calcularMedia())} text-white font-bold px-3 py-1 rounded-full`}>
                   Media: {calcularMedia()}
                 </span>
               )}
@@ -376,7 +392,7 @@ export default function Game({ stats }) {
                 >
                   <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-xs font-bold
                     ${once[index]
-                      ? 'bg-yellow-500 border-yellow-300 text-gray-900'
+                      ? `${getColorValoracion(once[index].valoracion)} border-white border-opacity-40 text-white`
                       : posicionesCompatibles(index)
                         ? 'bg-green-400 border-green-200 text-gray-900 animate-pulse'
                         : 'bg-white bg-opacity-20 border-white border-opacity-50 text-white'
@@ -415,14 +431,15 @@ export default function Game({ stats }) {
                 <div className="space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
                   {equipo.jugadores.map(j => {
                     const usado = jugadoresUsados.includes(j.jugador_real_id)
+                    const sinHueco = !usado && !tienePosicionDisponible(j)
                     const seleccionado = jugadorSeleccionado?.jugador_real_id === j.jugador_real_id
                     return (
                       <button
                         key={j.id}
                         onClick={() => seleccionarJugador(j)}
-                        disabled={usado}
+                        disabled={usado || sinHueco}
                         className={`w-full flex justify-between items-center rounded-lg px-3 py-2 transition-colors text-left
-                          ${usado
+                          ${usado || sinHueco
                             ? 'bg-gray-700 opacity-40 cursor-not-allowed'
                             : seleccionado
                               ? 'bg-yellow-500 text-gray-900'
@@ -432,8 +449,8 @@ export default function Game({ stats }) {
                         <span className="font-medium text-sm">{j.nombre}</span>
                         <div className="flex gap-2 items-center">
                           <span className="text-xs opacity-60">{j.posicion}</span>
-                          <span className={`font-bold text-sm px-2 py-0.5 rounded
-                            ${seleccionado ? 'bg-gray-900 text-yellow-400' : 'bg-gray-600'}`}>
+                          <span className={`font-bold text-sm px-2 py-0.5 rounded text-white
+                            ${seleccionado ? 'bg-gray-900 text-yellow-400' : getColorValoracion(j.valoracion)}`}>
                             {j.valoracion}
                           </span>
                         </div>
