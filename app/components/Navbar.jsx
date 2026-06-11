@@ -31,7 +31,21 @@ export default function Navbar() {
 
   return (
     <nav className="bg-gray-800 border-b border-gray-700 px-6 py-3 flex justify-between items-center">
-      <span className="font-bold text-yellow-400 text-lg">⚽ Champions Draft</span>
+      <div className="flex items-center gap-6">
+  <span className="font-bold text-yellow-400 text-lg">⚽ Champions Draft</span>
+  <button
+    onClick={() => router.push('/')}
+    className="text-gray-300 hover:text-white text-sm transition-colors"
+  >
+    Jugar
+  </button>
+  <button
+    onClick={() => router.push('/ranking')}
+    className="text-gray-300 hover:text-white text-sm transition-colors"
+  >
+    Ranking
+  </button>
+</div>
       <div className="flex items-center gap-4">
         {usuario ? (
           <>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formaciones, getEquipoAleatorio, getJugadoresCompatibles, compatibilidad } from '../lib/equipos'
+import { createClient } from '../lib/supabase-client'
 
 const posicionesLayout = {
   '4-3-3': [
@@ -130,6 +131,33 @@ export default function Game() {
   const [once, setOnce] = useState({})
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null)
   const [jugadoresUsados, setJugadoresUsados] = useState([])
+  const [usuario, setUsuario] = useState(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getUsuario = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        setUsuario(user)
+    }
+        getUsuario()
+    }, [])
+
+  const guardarPartida = async (onceFinal, mediaFinal, formacionFinal) => {
+    if (!usuario) return
+
+    const jugadores = Object.values(onceFinal).map(j => ({
+      nombre: j.nombre,
+      posicion: j.posicion,
+      valoracion: j.valoracion
+    }))
+
+    await supabase.from('partidas').insert({
+      user_id: usuario.id,
+      formacion: formacionFinal,
+      media: mediaFinal,
+      jugadores: jugadores
+    })
+  }
 
   const elegirFormacion = (f) => {
     setFormacionElegida(f)
@@ -150,7 +178,17 @@ export default function Game() {
     if (!compatibles.includes(jugadorSeleccionado.posicion)) return
     if (once[index]) return
 
-    setOnce(prev => ({ ...prev, [index]: jugadorSeleccionado }))
+    const nuevoOnce = { ...once, [index]: jugadorSeleccionado }
+    setOnce(nuevoOnce)
+    const formacionActual = formacionElegida
+    const totalPosiciones = posicionesLayout[formacionElegida].length
+
+    if (Object.keys(nuevoOnce).length === totalPosiciones) {
+      const media = Math.round(
+        Object.values(nuevoOnce).reduce((acc, j) => acc + j.valoracion, 0) / totalPosiciones
+      )
+      guardarPartida(nuevoOnce, media, formacionActual)
+    }
     setJugadoresUsados(prev => [...prev, jugadorSeleccionado.jugador_real_id])
     setJugadorSeleccionado(null)
     setEquipo(getEquipoAleatorio())
