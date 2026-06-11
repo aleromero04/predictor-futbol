@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { formaciones, getEquipoAleatorio, getJugadoresCompatibles, compatibilidad } from '../lib/equipos'
 import { createClient } from '../lib/supabase-client'
+import { getPartidaDeHoy } from '../lib/db'
 
 const posicionesLayout = {
   '4-3-3': [
@@ -132,12 +133,20 @@ export default function Game() {
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null)
   const [jugadoresUsados, setJugadoresUsados] = useState([])
   const [usuario, setUsuario] = useState(null)
+  const [partidaDeHoy, setPartidaDeHoy] = useState(null)
+  const [comprobando, setComprobando] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     const getUsuario = async () => {
         const { data: { user } } = await supabase.auth.getUser()
         setUsuario(user)
+
+        if (user) {
+            const partida = await getPartidaDeHoy(user.id)
+            setPartidaDeHoy(partida)
+        }
+        setComprobando(false)
     }
         getUsuario()
     }, [])
@@ -211,6 +220,25 @@ export default function Game() {
 
   return (
     <main className="min-h-screen bg-gray-900 text-white p-4">
+      {comprobando ? (
+        <div className="flex items-center justify-center h-96">
+          <p className="text-gray-400">Cargando...</p>
+        </div>
+      ) : partidaDeHoy ? (
+        <div className="max-w-md mx-auto mt-20 bg-gray-800 rounded-2xl p-8 text-center">
+          <p className="text-4xl mb-4">⏳</p>
+          <h2 className="text-2xl font-bold text-yellow-400 mb-2">Ya jugaste hoy</h2>
+          <p className="text-gray-400 mb-6">Tu puntuación de hoy: <span className="text-white font-bold text-2xl">{partidaDeHoy.media}</span></p>
+          <p className="text-gray-400 text-sm">Vuelve mañana para una nueva partida</p>
+          <button
+            onClick={() => router.push('/ranking')}
+            className="mt-6 bg-yellow-500 text-gray-900 font-bold px-6 py-3 rounded-xl hover:bg-yellow-400 transition-colors"
+          >
+            Ver ranking
+          </button>
+        </div>
+      ) : (
+      <>
       <h1 className="text-3xl font-bold text-center mb-6">⚽ Champions Draft</h1>
 
       {!formacionElegida ? (
@@ -372,6 +400,8 @@ export default function Game() {
             )}
           </div>
         </div>
+      )}
+      </>
       )}
     </main>
   )

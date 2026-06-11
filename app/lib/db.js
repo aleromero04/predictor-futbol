@@ -41,3 +41,21 @@ export async function getPartidosDB(competicionId) {
 
   return data
 }
+
+export async function getPartidaDeHoy(userId) {
+  if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') return null
+
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+
+  const { data } = await supabase
+    .from('partidas')
+    .select('id, media, formacion, creada_at, jugadores')
+    .eq('user_id', userId)
+    .gte('creada_at', hoy.toISOString())
+    .order('creada_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  return data
+}
