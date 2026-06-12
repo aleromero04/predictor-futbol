@@ -14,13 +14,13 @@ export const metadata = {
     url: 'https://predictor-futbol-three.vercel.app',
     siteName: 'Champions Draft',
     images: [
-      {
-        url: 'https://predictor-futbol-three.vercel.app/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Champions Draft'
-      }
-    ],
+  {
+    url: 'https://predictor-futbol-three.vercel.app/og-image.png',
+    width: 851,
+    height: 315,
+    alt: 'Champions Draft'
+  }
+],
     locale: 'es_ES',
     type: 'website'
   },
