@@ -45,6 +45,12 @@ export default function Navbar() {
   >
     Ranking
   </button>
+  <button
+    onClick={() => router.push('/sbcs')}
+    className="text-gray-300 hover:text-white text-sm transition-colors"
+  >
+    SBCs
+  </button>
 </div>
       <div className="flex items-center gap-4">
         {usuario ? (
@@ -73,4 +79,5 @@ export default function Navbar() {
       </div>
     </nav>
   )
+  
 }

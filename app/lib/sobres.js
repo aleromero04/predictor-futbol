@@ -81,7 +81,8 @@ export function generarSobre(tipoSobre) {
       nombre: jugador.nombre,
       valoracion: jugador.valoracion,
       posicion: jugador.posicion,
-      equipo: jugador.equipo
+      equipo: jugador.equipo,
+      nacionalidad: jugador.nacionalidad || null
     })
   }
 

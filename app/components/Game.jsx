@@ -490,10 +490,19 @@ export default function Game({ stats }) {
             {!onceLleno ? (
               <>
                 <div className="mb-4 flex justify-between items-start">
-                  <div>
-                    <p className="text-gray-400 text-xs uppercase tracking-wide">Equipo sorteado</p>
-                    <p className="text-xl font-bold text-yellow-400">{equipo.nombre}</p>
-                    <p className="text-gray-400 text-sm">Media {equipo.media} · {equipo.liga}</p>
+                  <div className="flex items-center gap-3">
+                    {equipo.escudo_url && (
+                      <img
+                        src={equipo.escudo_url}
+                        alt={equipo.nombre}
+                        className="w-10 h-10 object-contain"
+                      />
+                    )}
+                    <div>
+                      <p className="text-gray-400 text-xs uppercase tracking-wide">Equipo sorteado</p>
+                      <p className="text-xl font-bold text-yellow-400">{equipo.nombre}</p>
+                      <p className="text-gray-400 text-sm">Media {equipo.media} · {equipo.liga}</p>
+                    </div>
                   </div>
                   {usuario && (
                     <button

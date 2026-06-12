@@ -105,7 +105,8 @@ export async function guardarCartas(userId, cartas, supabaseClient) {
     nombre: c.nombre,
     valoracion: c.valoracion,
     posicion: c.posicion,
-    equipo: c.equipo
+    equipo: c.equipo,
+    nacionalidad: c.nacionalidad || null
   }))
 
   const { error } = await supabaseClient
@@ -128,4 +129,27 @@ export async function getCartas(userId, supabaseClient) {
     .order('valoracion', { ascending: false })
 
   return data || []
+}
+
+export async function venderCarta(userId, cartaId, supabaseClient) {
+  const { error } = await supabaseClient
+    .from('cartas')
+    .delete()
+    .eq('id', cartaId)
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error('Error vendiendo carta:', error)
+    return false
+  }
+  return true
+}
+
+export function getPrecioVenta(valoracion) {
+  if (valoracion >= 94) return 300
+  if (valoracion >= 91) return 200
+  if (valoracion >= 88) return 100
+  if (valoracion >= 85) return 50
+  if (valoracion >= 80) return 25
+  return 10
 }
